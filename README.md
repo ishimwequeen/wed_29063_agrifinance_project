@@ -43,3 +43,6 @@ LANDS: Farmer land registrations
 CUSTOMER_MESSAGES: SMS/notification system 
 SUPPLIERS: Approved suppliers 
 BANKS: Payment bank partners 
+
+### ER diagram
+<img width="795" height="515" alt="image" src="https://github.com/user-attachments/assets/54bfd26f-bc6f-47a8-a23d-1b01885dade6" />
