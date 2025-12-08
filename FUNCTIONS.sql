@@ -173,3 +173,59 @@ EXCEPTION
         RETURN 'BK' || TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS') || '_' || DBMS_RANDOM.STRING('X', 6);
 END GENERATE_BANK_REFERENCE;
 /
+--
+CREATE OR REPLACE FUNCTION GET_APPLICATION_RANKINGS
+RETURN SYS_REFCURSOR
+IS
+    v_cursor SYS_REFCURSOR;
+BEGIN
+    OPEN v_cursor FOR
+        WITH application_stats AS (
+            SELECT 
+                FARMER_ID,
+                COUNT(*) AS APPLICATION_COUNT,
+                SUM(AMOUNT_REQUESTED) AS TOTAL_AMOUNT,
+                AVG(AMOUNT_REQUESTED) AS AVERAGE_AMOUNT
+            FROM APPLICATIONS
+            WHERE STATUS IN ('APPROVED', 'PAID')
+            GROUP BY FARMER_ID
+        )
+        SELECT 
+            F.FARMER_ID,
+            F.FIRST_NAME || ' ' || F.LAST_NAME AS FARMER_NAME,
+            S.APPLICATION_COUNT,
+            S.TOTAL_AMOUNT,
+            S.AVERAGE_AMOUNT,
+            
+            -- 1. RANK(): Ranking with gaps for ties
+            RANK() OVER (ORDER BY S.TOTAL_AMOUNT DESC) AS AMOUNT_RANK,
+            
+            -- 2. DENSE_RANK(): Ranking without gaps
+            DENSE_RANK() OVER (ORDER BY S.APPLICATION_COUNT DESC) AS COUNT_RANK,
+            
+            -- 3. ROW_NUMBER(): Unique sequential numbers
+            ROW_NUMBER() OVER (ORDER BY S.TOTAL_AMOUNT DESC) AS ROW_NUM,
+            
+            -- 4. PERCENT_RANK(): Relative position (0-1)
+            ROUND(PERCENT_RANK() OVER (ORDER BY S.TOTAL_AMOUNT DESC), 3) AS PERCENTILE,
+            
+            -- 5. NTILE(4): Divide into quartiles
+            NTILE(4) OVER (ORDER BY S.TOTAL_AMOUNT DESC) AS QUARTILE,
+            
+            -- 6. LAG(): Previous farmer's amount
+            LAG(S.TOTAL_AMOUNT) OVER (ORDER BY S.TOTAL_AMOUNT DESC) AS PREV_AMOUNT,
+            
+            -- 7. LEAD(): Next farmer's amount
+            LEAD(S.TOTAL_AMOUNT) OVER (ORDER BY S.TOTAL_AMOUNT DESC) AS NEXT_AMOUNT,
+            
+            -- 8. Difference from previous (using LAG)
+            S.TOTAL_AMOUNT - LAG(S.TOTAL_AMOUNT) OVER (ORDER BY S.TOTAL_AMOUNT DESC) 
+                AS AMOUNT_DIFF_FROM_PREV
+            
+        FROM application_stats S
+        JOIN FARMERS F ON S.FARMER_ID = F.FARMER_ID
+        ORDER BY S.TOTAL_AMOUNT DESC;
+    
+    RETURN v_cursor;
+END GET_APPLICATION_RANKINGS;
+/
