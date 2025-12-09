@@ -51,5 +51,7 @@ REPEAT_ERROR_ALERTS:SHOWS ERRORS REATED MORE THAN 3 TIMES
 
 ### ER diagram
 <img width="1077" height="562" alt="image" src="https://github.com/user-attachments/assets/f432e07d-75c4-4a3a-af04-ddf1c0818c63" />
-
-
+---
+MY BPMN DIAGRAM
+This shows how the process moves on step by step
+![BPMN DIAGRAM](https://github.com/user-attachments/assets/55b89df5-a7e2-40b7-b4a5-dd73f4990136)
