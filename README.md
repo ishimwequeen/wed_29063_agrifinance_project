@@ -45,4 +45,6 @@ SUPPLIERS: Approved suppliers
 BANKS: Payment bank partners 
 
 ### ER diagram
-<img width="795" height="515" alt="image" src="https://github.com/user-attachments/assets/54bfd26f-bc6f-47a8-a23d-1b01885dade6" />
+<img width="1077" height="562" alt="image" src="https://github.com/user-attachments/assets/f432e07d-75c4-4a3a-af04-ddf1c0818c63" />
+
+
