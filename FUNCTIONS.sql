@@ -229,3 +229,37 @@ BEGIN
     RETURN v_cursor;
 END GET_APPLICATION_RANKINGS;
 /
+--
+CREATE OR REPLACE FUNCTION IS_DATE_HOLIDAY(
+    p_check_date IN DATE
+) RETURN VARCHAR2 IS
+    v_holiday_name VARCHAR2(100);
+    v_result VARCHAR2(150);
+BEGIN
+    -- Check if the date is a holiday
+    BEGIN
+        SELECT HOLIDAY_NAME
+        INTO v_holiday_name
+        FROM PUBLIC_HOLIDAYS
+        WHERE TRUNC(HOLIDAY_DATE) = TRUNC(p_check_date)
+        AND ROWNUM = 1;
+        
+        v_result := 'Y:' || v_holiday_name;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            v_result := 'N';
+        WHEN TOO_MANY_ROWS THEN
+            SELECT HOLIDAY_NAME
+            INTO v_holiday_name
+            FROM PUBLIC_HOLIDAYS
+            WHERE TRUNC(HOLIDAY_DATE) = TRUNC(p_check_date)
+            AND ROWNUM = 1;
+            v_result := 'Y:' || v_holiday_name;
+    END;
+    
+    RETURN v_result;
+EXCEPTION
+    WHEN OTHERS THEN
+        RETURN 'ERROR:' || SQLERRM;
+END IS_DATE_HOLIDAY;
+/
