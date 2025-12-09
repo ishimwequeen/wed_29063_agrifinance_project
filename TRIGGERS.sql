@@ -75,3 +75,76 @@ EXCEPTION
         DBMS_OUTPUT.PUT_LINE('Error code: ' || SQLCODE);
 END;
 /
+--
+CREATE OR REPLACE TRIGGER TRG_FARMERS_RESTRICT
+BEFORE INSERT OR UPDATE OR DELETE ON FARMERS
+FOR EACH ROW
+DECLARE
+    v_farmer_id VARCHAR2(50);
+    v_operation VARCHAR2(10);
+    v_status VARCHAR2(20) := 'DENIED';
+    v_day_of_week VARCHAR2(20);
+    v_holiday_check VARCHAR2(150);
+    PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+    -- Get day of week
+    SELECT TO_CHAR(SYSDATE, 'Day') INTO v_day_of_week FROM DUAL;
+    v_day_of_week := TRIM(v_day_of_week);
+    
+    -- Determine operation and farmer ID
+    IF INSERTING THEN
+        v_operation := 'INSERT';
+        v_farmer_id := :NEW.FARMER_ID;
+    ELSIF UPDATING THEN
+        v_operation := 'UPDATE';
+        v_farmer_id := :OLD.FARMER_ID;
+    ELSE
+        v_operation := 'DELETE';
+        v_farmer_id := :OLD.FARMER_ID;
+    END IF;
+    
+    -- Check if it's Saturday or Sunday
+    IF v_day_of_week IN ('Saturday', 'Sunday') THEN
+        -- Use your IS_DATE_HOLIDAY function
+        v_holiday_check := IS_DATE_HOLIDAY(SYSDATE);
+        
+        -- Check the result from your function
+        IF v_holiday_check LIKE 'Y:%' THEN
+            v_status := 'DENIED';
+        ELSIF v_holiday_check = 'N' THEN
+            v_status := 'ALLOWED';
+        ELSE
+            v_status := 'DENIED';
+        END IF;
+    END IF;
+    
+    -- Log the attempt (using your table structure)
+    INSERT INTO FARMER_AUDIT_LOG (
+        AUDIT_ID, 
+        TABLE_NAME, 
+        OPERATION_TYPE,      -- Matches your table column
+        FARMER_ID, 
+        STATUS
+        -- Other columns will use defaults: AUDIT_DATE, AUDIT_TIME, USER_NAME
+    ) VALUES (
+        AUDIT_LOG_SEQ.NEXTVAL, 
+        'FARMERS', 
+        v_operation,         -- Variable with 'INSERT', 'UPDATE', or 'DELETE'
+        v_farmer_id, 
+        v_status
+    );
+    COMMIT;
+    
+    -- If denied, raise error
+    IF v_status = 'DENIED' THEN
+        RAISE_APPLICATION_ERROR(-20001, 
+            'Farmer operation ' || v_operation || ' not allowed on ' || v_day_of_week || 
+            CASE 
+                WHEN v_holiday_check LIKE 'Y:%' THEN 
+                    ' (Holiday: ' || SUBSTR(v_holiday_check, 3) || ')'
+                ELSE ''
+            END ||
+            '. Farmers can only operate on weekends (non-holidays).');
+    END IF;
+END TRG_FARMERS_RESTRICT;
+/
