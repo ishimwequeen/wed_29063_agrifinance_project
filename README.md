@@ -43,6 +43,11 @@ LANDS: Farmer land registrations
 CUSTOMER_MESSAGES: SMS/notification system 
 SUPPLIERS: Approved suppliers 
 BANKS: Payment bank partners 
+PAYMENTS:SHOWS SUBSIDIES GIVEN OUT
+APPLICATIONS: WHO APPLIED FOR A SUBSIDY
+FARMER_ALERT_LOG: 
+PUBLIC_HOLIDAY: SHOWS PUBLIC HOLIDAYS
+REPEAT_ERROR_ALERTS:SHOWS ERRORS REATED MORE THAN 3 TIMES
 
 ### ER diagram
 <img width="1077" height="562" alt="image" src="https://github.com/user-attachments/assets/f432e07d-75c4-4a3a-af04-ddf1c0818c63" />
